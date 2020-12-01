@@ -13,7 +13,7 @@ struct RunOptions: ParsableArguments {
 let options = RunOptions.parseOrExit()
 
 // MARK: - Actual work done here
-func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
+func findPair(in expenses: ArraySlice<Int>, summingTo target: Int) -> (Int, Int)? {
   var pairSet = Set<Int>()
   for expense in expenses {
     let match = target - expense
@@ -31,7 +31,7 @@ var expenses = input.components(separatedBy: .newlines).compactMap(Int.init)[...
 
 if !options.skipPair {
   print("Looking for pairs:")
-  if let (i, j) = findPair(expenses: expenses, target: 2020) {
+  if let (i, j) = findPair(in: expenses, summingTo: 2020) {
     print("\tFound pair: \(i) * \(j) = \(i * (j))")
   }
 }
@@ -39,7 +39,7 @@ if !options.skipPair {
 if !options.skipTriple {
   print("Looking for triplets:")
   while let i = expenses.popFirst() {
-    if let (j, k) = findPair(expenses: expenses, target: 2020 - i) {
+    if let (j, k) = findPair(in: expenses, summingTo: 2020 - i) {
       print("\tTriplets found: \(i) * \(j) * \(k) = \(i * j * k)")
       break
     }
