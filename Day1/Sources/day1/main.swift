@@ -27,7 +27,7 @@ let options = RunOptions.parseOrExit()
 
 // MARK: - Actual work done here
 let input = try String(contentsOf: options.inURL, encoding: .utf8)
-var expenses: ArraySlice<Int> = input.components(separatedBy: .newlines).compactMap(Int.init)[...]
+var expenses = input.components(separatedBy: .newlines).compactMap(Int.init)[...]
 
 if !options.skipPair {
   print("Looking for pairs:")
@@ -39,9 +39,9 @@ if !options.skipPair {
 if !options.skipTriple {
   print("Looking for triplets:")
   while let i = expenses.popFirst() {
-    let target = 2020 - i
-    if let (j, k) = findPair(expenses: expenses, target: target) {
+    if let (j, k) = findPair(expenses: expenses, target: 2020 - i) {
       print("\tTriplets found: \(i) * \(j) * \(k) = \(i * j * k)")
+      break
     }
   }
 }
