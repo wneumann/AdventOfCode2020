@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 
+// MARK: - Command line parsing
 struct RunOptions: ParsableArguments {
   @Argument(help: "The location of the input file.", transform: URL.init(fileURLWithPath:))
   var inURL: URL
@@ -23,13 +24,10 @@ func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
 }
 
 let options = RunOptions.parseOrExit()
-let input = try String(contentsOf: options.inURL, encoding: .utf8)
 
-var expenses: ArraySlice<Int> =
-  input
-    .components(separatedBy: .newlines)
-    .compactMap(Int.init)
-    .sorted()[...]
+// MARK: - Actual work done here
+let input = try String(contentsOf: options.inURL, encoding: .utf8)
+var expenses: ArraySlice<Int> = input.components(separatedBy: .newlines).compactMap(Int.init)[...]
 
 if !options.skipPair {
   print("Looking for pairs:")
