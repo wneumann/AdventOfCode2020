@@ -10,6 +10,9 @@ struct RunOptions: ParsableArguments {
   @Flag var skipTriple = false
 }
 
+let options = RunOptions.parseOrExit()
+
+// MARK: - Actual work done here
 func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
   var pairSet = Set<Int>()
   for expense in expenses {
@@ -23,9 +26,6 @@ func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
   return nil
 }
 
-let options = RunOptions.parseOrExit()
-
-// MARK: - Actual work done here
 let input = try String(contentsOf: options.inURL, encoding: .utf8)
 var expenses = input.components(separatedBy: .newlines).compactMap(Int.init)[...]
 
