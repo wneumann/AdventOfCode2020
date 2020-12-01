@@ -23,10 +23,7 @@ func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
 }
 
 let options = RunOptions.parseOrExit()
-
-guard
-  let input = try? String(contentsOf: options.inURL, encoding: .utf8)
-else { fatalError("Invalid file path") }
+let input = try String(contentsOf: options.inURL, encoding: .utf8)
 
 var expenses: ArraySlice<Int> =
   input
