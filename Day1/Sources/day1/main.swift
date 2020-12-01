@@ -25,11 +25,7 @@ func findPair(expenses: ArraySlice<Int>, target: Int) -> (Int, Int)? {
 let options = RunOptions.parseOrExit()
 let input = try String(contentsOf: options.inURL, encoding: .utf8)
 
-var expenses: ArraySlice<Int> =
-  input
-    .components(separatedBy: .newlines)
-    .compactMap(Int.init)
-    .sorted()[...]
+var expenses: ArraySlice<Int> = input.components(separatedBy: .newlines).compactMap(Int.init)[...]
 
 if !options.skipPair {
   print("Looking for pairs:")
