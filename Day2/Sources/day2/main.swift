@@ -10,21 +10,17 @@ struct RunOptions: ParsableArguments {
 let options = RunOptions.parseOrExit()
 
 // MARK: - Actual work done here
+let passwordParser =
+  zip(.keep(.int, discard: .char),
+      .keep(.int, discard: .whitespace),
+      .keep(.char, discard: .literal(": ")),
+      .remainder)
+  
+
 @available(OSX 10.15, *)
 extension String {
   func passwordComponents() -> (Int, Int, Character, String)? {
-    // Using the Scanner class since the form is fixed in a trivial pattern
-    // I'm sure there'a a better way to handle the skipped characters bit but my scanner knowledge is scant
-    let charactersToBeSkipped = CharacterSet(charactersIn: " -:")
-    let scanner = Scanner(string: self)
-    guard let lowerBound = scanner.scanInt() else { return nil }
-    _ = scanner.scanCharacters(from: charactersToBeSkipped)
-    guard let upperBound = scanner.scanInt(), upperBound >= lowerBound else { return nil }
-    _ = scanner.scanCharacters(from: charactersToBeSkipped)
-    guard let requiredCharacter = scanner.scanCharacter() else { return nil }
-    _ = scanner.scanCharacters(from: charactersToBeSkipped)
-    guard let password = scanner.scanUpToCharacters(from: charactersToBeSkipped) else { return nil }
-    return (lowerBound, upperBound, requiredCharacter, password)
+    return try? passwordParser.run(self).match.get()
   }
   
   var isValidPassword: Bool {
