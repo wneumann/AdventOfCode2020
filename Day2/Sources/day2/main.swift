@@ -17,7 +17,6 @@ let passwordParser =
       .remainder)
   
 
-@available(OSX 10.15, *)
 extension String {
   func passwordComponents() -> (Int, Int, Character, String)? {
     return try? passwordParser.run(self).match.get()
@@ -41,11 +40,7 @@ let passwords =
         .components(separatedBy: .newlines)
 
 
-if #available(OSX 10.15, *) {
-  let valids = passwords.filter(\.isValidPassword).count
-  print("There are \(valids) valid passwords in the database")
-  let reallyValids = passwords.filter(\.isReallyValidPassword).count
-  print("There are \(reallyValids) valid passwords in the database")
-} else {
-  print("Update your damn OS already!")
-}
+let valids = passwords.filter(\.isValidPassword).count
+print("There are \(valids) valid passwords in the database")
+let reallyValids = passwords.filter(\.isReallyValidPassword).count
+print("There are \(reallyValids) valid passwords in the database")
