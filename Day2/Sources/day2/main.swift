@@ -5,9 +5,6 @@ import Foundation
 struct RunOptions: ParsableArguments {
   @Argument(help: "The location of the input file.", transform: URL.init(fileURLWithPath:))
   var inURL: URL
-
-//  @Flag var skipPair = false
-//  @Flag var skipTriple = false
 }
 
 let options = RunOptions.parseOrExit()
@@ -16,6 +13,8 @@ let options = RunOptions.parseOrExit()
 @available(OSX 10.15, *)
 extension String {
   func passwordComponents() -> (Int, Int, Character, String)? {
+    // Using the Scanner class since the form is fixed n a trivial pattern
+    // I'm sure there'a a better way to handle the skipped characters bit but my scanner knoledge is scant
     let charactersToBeSkipped = CharacterSet(charactersIn: " -:")
     let scanner = Scanner(string: self)
     guard let lowerBound = scanner.scanInt() else { return nil }
