@@ -5,15 +5,11 @@ import Foundation
 struct RunOptions: ParsableArguments {
   @Argument(help: "The location of the input file.", transform: URL.init(fileURLWithPath:))
   var inURL: URL
-
-  @Flag var skipStar1 = false
-  @Flag var skipStar2 = false
 }
 
 let options = RunOptions.parseOrExit()
 
 // MARK: - Actual work done here
-
 // They really need to get Hashable synthesis for tuples already…
 public struct Point<T: Hashable>: Hashable {
   let x: T
@@ -40,8 +36,11 @@ struct Hill {
   
   func countTrees(forSlopes slopes: [(across: Int, down: Int)]) -> [Int] {
     slopes.map { slope -> Int in
-      zip((0...).lazy.map { $0 * slope.across % width }, stride(from: 0, to: length, by: slope.down)).reduce(0) { trees, square in
-        self.trees.contains(Point(x: square.0, y: square.1)) ? trees + 1 : trees
+      zip(
+        (0...).lazy.map { $0 * slope.across % width },
+        stride(from: 0, to: length, by: slope.down)
+      ).reduce(0) { treesHit, square in
+        treesHit + (trees.contains(Point(x: square.0, y: square.1)) ? 1 : 0)
       }
     }
   }
