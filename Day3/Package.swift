@@ -17,7 +17,7 @@ let package = Package(
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ]),
     .testTarget(
-      name: "day1Tests",
+      name: "day3Tests",
       dependencies: ["day3"]),
   ]
 )

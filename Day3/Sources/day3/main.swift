@@ -13,3 +13,4 @@ struct RunOptions: ParsableArguments {
 let options = RunOptions.parseOrExit()
 
 // MARK: - Actual work done here
+let input = try String(contentsOf: options.inURL, encoding: .utf8)
