@@ -15,36 +15,26 @@ let input =
   .trimmingCharacters(in: .whitespacesAndNewlines)
   .components(separatedBy: "\n\n")
 
-enum LengthUnit {
-  case inch, centimeter
-  
-  init?(_ str: Substring) {
-    switch str {
-    case "in": self = .inch
-    case "cm": self = .centimeter
-    default: return nil
-    }
-  }
+enum LengthUnit: String, CustomStringConvertible {
+  case inch = "in"
+  case centimeter = "cm"
+
+  var description: String { return self.rawValue }
 }
 
-enum EyeColor {
-  case amber, blue, brown, gray, green, hazel, other
+enum EyeColor: String, CustomStringConvertible {
+  case amber = "amb"
+  case blue = "blu"
+  case brown = "brn"
+  case gray = "gry"
+  case green = "grn"
+  case hazel = "hzl"
+  case other = "oth"
   
-  init?(_ str: String) {
-    switch str {
-    case "amb": self = .amber
-    case "blu": self = .blue
-    case "brn": self = .brown
-    case "gry": self = .gray
-    case "grn": self = .green
-    case "hzl": self = .hazel
-    case "oth": self = .other
-    default: return nil
-    }
-  }
+  var description: String { return self.rawValue }
 }
 
-enum PassportField {
+enum PassportField: CustomStringConvertible {
   case byr(Int)
   case iyr(Int)
   case eyr(Int)
@@ -57,17 +47,17 @@ enum PassportField {
   init?(field: String, value: String) {
     switch field {
     case "byr":
-      guard let birthYear = Int(value), 1920...2002 ~= birthYear else { return nil }
+      guard value.count == 4, let birthYear = Int(value), 1920...2002 ~= birthYear else { return nil }
       self = .byr(birthYear)
     case "iyr":
-      guard let issueYear = Int(value), 2010...2020 ~= issueYear else { return nil }
+      guard value.count == 4, let issueYear = Int(value), 2010...2020 ~= issueYear else { return nil }
       self = .iyr(issueYear)
     case "eyr":
-      guard let expirationYear = Int(value), 2020...2030 ~= expirationYear else { return nil }
+      guard value.count == 4, let expirationYear = Int(value), 2020...2030 ~= expirationYear else { return nil }
       self = .eyr(expirationYear)
     case "hgt":
       guard
-        let unit = LengthUnit(value.suffix(2)),
+        let unit = LengthUnit(rawValue: String(value.suffix(2))),
         let height = Int(value.dropLast(2)),
         (.centimeter ~= unit && 150...193 ~= height) || (.inch ~= unit && 59...76 ~= height)
       else { return nil }
@@ -80,7 +70,7 @@ enum PassportField {
       else { return nil }
       self = .hcl(hairColor)
     case "ecl":
-      guard let eyeColor = EyeColor(value) else { return nil }
+      guard let eyeColor = EyeColor(rawValue: value) else { return nil }
       self = .ecl(eyeColor)
     case "pid":
       guard value.count == 9, let passportID = Int(value) else { return nil }
@@ -90,9 +80,23 @@ enum PassportField {
     default: return nil
     }
   }
+  
+  var description: String {
+    switch self {
+    case let .byr(year): return "byr:\(year)"
+    case let .iyr(year): return "iyr:\(year)"
+    case let .eyr(year): return "eyr:\(year)"
+    case let .hgt(height, unit): return "hgt:\(height)\(unit)"
+    case let .hcl(color): return "hcl:#\(String(format: "%06x", color))"
+    case let .ecl(color): return "ecl:\(color)"
+    case let .pid(number): return "pid:\(String(format: "%09d", number))"
+    case let .cid(value): return "cid:\(value)"
+    }
+  }
+  
 }
 
-struct Passport {
+struct Passport: CustomStringConvertible {
   static func splitFields(_ record: String) -> [String: String]? {
     let fullPass = Set(["ecl", "pid", "eyr", "hcl", "byr", "iyr", "hgt"])
     let passport: [String: String] =
@@ -105,6 +109,7 @@ struct Passport {
   }
   
   private var fields = [String: PassportField]()
+  var description: String { return fields.values.map(\.description).sorted().joined(separator: " ")}
   
   init?(_ str: String) {
     guard let fieldDict = Passport.splitFields(str) else { return nil }
