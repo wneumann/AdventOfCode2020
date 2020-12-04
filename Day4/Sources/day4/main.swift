@@ -96,18 +96,12 @@ struct Passport {
   static func splitFields(_ record: String) -> [String: String]? {
     let fullPass = Set(["ecl", "pid", "eyr", "hcl", "byr", "iyr", "hgt"])
     let passport: [String: String] =
-      record
-      .components(separatedBy: .whitespacesAndNewlines)
-      .reduce(into: [:]) {
+      record.components(separatedBy: .whitespacesAndNewlines).reduce(into: [:]) {
         let arr = $1.components(separatedBy: ":")
         $0[arr[0]] = arr[1]
       }
     
-    if fullPass.intersection(passport.keys) == fullPass {
-      return passport
-    } else {
-      return nil
-    }
+    return fullPass.intersection(passport.keys) == fullPass ? passport : nil
   }
   
   private var fields = [String: PassportField]()
