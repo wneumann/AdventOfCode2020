@@ -22,13 +22,13 @@ struct Hill {
   let trees: Set<Point<Int>>
   
   init(_ input: String) {
-    let hill = input.components(separatedBy: .newlines)
-    length = hill.count
-    width = hill.first?.count ?? 0
-    trees = hill.enumerated().reduce(into: Set<Point<Int>>()) { trees, row in
-      row.element.enumerated().forEach { cell in
+    let hillRows = input.components(separatedBy: .newlines)
+    length = hillRows.count
+    width = hillRows.first?.count ?? 0
+    trees = hillRows.enumerated().reduce(into: Set<Point<Int>>()) { treeSet, hillRow in
+      hillRow.element.enumerated().forEach { cell in
         if cell.element == "#" {
-          trees.insert(Point(x: cell.offset, y: row.offset))
+          treeSet.insert(Point(x: cell.offset, y: hillRow.offset))
         }
       }
     }
