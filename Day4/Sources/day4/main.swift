@@ -93,34 +93,35 @@ enum PassportField {
 }
 
 struct Passport {
-  static func softValidate(_ str: String) -> Bool{
+  static func splitFields(_ record: String) -> [String: String]? {
     let fullPass = Set(["ecl", "pid", "eyr", "hcl", "byr", "iyr", "hgt"])
-    let passport = Set(str.components(separatedBy: .whitespacesAndNewlines).map { String($0.prefix(while: { $0 != ":" })) })
-    return fullPass.intersection(passport) == fullPass
+    let passport: [String: String] =
+      record
+      .components(separatedBy: .whitespacesAndNewlines)
+      .reduce(into: [:]) {
+        let arr = $1.components(separatedBy: ":")
+        $0[arr[0]] = arr[1]
+      }
+    
+    if fullPass.intersection(passport.keys) == fullPass {
+      return passport
+    } else {
+      return nil
+    }
   }
-  var fields = [PassportField]()
+  
+  private var fields = [String: PassportField]()
   
   init?(_ str: String) {
-    var validatedFields = Set<String>()
-    
-    let rawFields: [[String]] =
-      str
-        .components(separatedBy: .whitespacesAndNewlines)
-        .map { $0.components(separatedBy: ":") }
-    for rawField in rawFields {
-      if let field = PassportField(field: rawField[0], value: rawField[1]) {
-        validatedFields.insert(rawField[0])
-        fields.append(field)
-      } else {
-        return nil
-      }
+    guard let fieldDict = Passport.splitFields(str) else { return nil }
+    for (field, value) in fieldDict {
+      guard let passportField = PassportField(field: field, value: value) else { return nil }
+      fields[field] = passportField
     }
-    validatedFields.remove("cid")
-    if validatedFields.count != 7 { return nil }
   }
 }
 
-let softValidPasses = input.reduce(0) { $0 + (Passport.softValidate($1) ? 1 : 0) }
+let softValidPasses = input.compactMap(Passport.splitFields).count
 print("There are \(softValidPasses) 'valid' passports.")
 let hardValidPasses = input.compactMap(Passport.init)
 print("There are \(hardValidPasses.count) truly valid passports.")
