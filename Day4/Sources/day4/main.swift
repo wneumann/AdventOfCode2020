@@ -15,32 +15,112 @@ let input =
   .trimmingCharacters(in: .whitespacesAndNewlines)
   .components(separatedBy: "\n\n")
 
-struct Passport {
-//  let byr: String   // (Birth Year)
-//  let cid: String?  // (Country ID)
-//  let ecl: String   // (Eye Color)
-//  let eyr: String   // (Expiration Year)
-//  let hcl: String   // (Hair Color)
-//  let hgt: String   // (Height)
-//  let iyr: String   // (Issue Year)
-//  let pid: String   // (Passport ID)
+enum LengthUnit {
+  case inch, centimeter
   
-  let fields: [String: String]
-  
-  init?(_ str: String) {
-    let fieldstr: [(String, String)] =
-      str
-        .components(separatedBy: .whitespacesAndNewlines)
-        .map {
-          let arr = $0.components(separatedBy: ":")
-          return (arr[0], arr[1])
-        }
-    fields = Dictionary(uniqueKeysWithValues: fieldstr)
-    print("input: \(str)\nfieldstr: \(fieldstr)\ndict: \(fields)\n\n")
-    guard ["byr", "ecl", "eyr", "hcl", "hgt", "iyr", "pid"].compactMap({ fields[$0] }).count == 7 else { return nil }
-    
+  init?(_ str: Substring) {
+    switch str {
+    case "in": self = .inch
+    case "cm": self = .centimeter
+    default: return nil
+    }
   }
 }
 
-let validPasses = input.compactMap(Passport.init)
-print("There are \(validPasses.count) 'valid' passports.")
+enum EyeColor {
+  case amber, blue, brown, gray, green, hazel, other
+  
+  init?(_ str: String) {
+    switch str {
+    case "amb": self = .amber
+    case "blu": self = .blue
+    case "brn": self = .brown
+    case "gry": self = .gray
+    case "grn": self = .green
+    case "hzl": self = .hazel
+    case "oth": self = .other
+    default: return nil
+    }
+  }
+}
+
+enum PassportField {
+  case byr(Int)
+  case iyr(Int)
+  case eyr(Int)
+  case hgt(Int, LengthUnit)
+  case hcl(Int)
+  case ecl(EyeColor)
+  case pid(Int)
+  case cid(String)
+  
+  init?(field: String, value: String) {
+    switch field {
+    case "byr":
+      guard let birthYear = Int(value), 1920...2002 ~= birthYear else { return nil }
+      self = .byr(birthYear)
+    case "iyr":
+      guard let issueYear = Int(value), 2010...2020 ~= issueYear else { return nil }
+      self = .iyr(issueYear)
+    case "eyr":
+      guard let expirationYear = Int(value), 2020...2030 ~= expirationYear else { return nil }
+      self = .eyr(expirationYear)
+    case "hgt":
+      guard
+        let unit = LengthUnit(value.suffix(2)),
+        let height = Int(value.dropLast(2)),
+        (.centimeter ~= unit && 150...193 ~= height) || (.inch ~= unit && 59...76 ~= height)
+      else { return nil }
+      self = .hgt(height, unit)
+    case "hcl":
+      guard
+        value.count == 7,
+        value.first! == "#",
+        let hairColor = Int(value.dropFirst(), radix: 16)
+      else { return nil }
+      self = .hcl(hairColor)
+    case "ecl":
+      guard let eyeColor = EyeColor(value) else { return nil }
+      self = .ecl(eyeColor)
+    case "pid":
+      guard value.count == 9, let passportID = Int(value) else { return nil }
+      self = .pid(passportID)
+    case "cid":
+      self = .cid(value)
+    default: return nil
+    }
+  }
+}
+
+struct Passport {
+  static func softValidate(_ str: String) -> Bool{
+    let fullPass = Set(["ecl", "pid", "eyr", "hcl", "byr", "iyr", "hgt"])
+    let passport = Set(str.components(separatedBy: .whitespacesAndNewlines).map { String($0.prefix(while: { $0 != ":" })) })
+    return fullPass.intersection(passport) == fullPass
+  }
+  var fields = [PassportField]()
+  
+  init?(_ str: String) {
+    var validatedFields = Set<String>()
+    
+    let rawFields: [[String]] =
+      str
+        .components(separatedBy: .whitespacesAndNewlines)
+        .map { $0.components(separatedBy: ":") }
+    for rawField in rawFields {
+      if let field = PassportField(field: rawField[0], value: rawField[1]) {
+        validatedFields.insert(rawField[0])
+        fields.append(field)
+      } else {
+        return nil
+      }
+    }
+    validatedFields.remove("cid")
+    if validatedFields.count != 7 { return nil }
+  }
+}
+
+let softValidPasses = input.reduce(0) { $0 + (Passport.softValidate($1) ? 1 : 0) }
+print("There are \(softValidPasses) 'valid' passports.")
+let hardValidPasses = input.compactMap(Passport.init)
+print("There are \(hardValidPasses.count) truly valid passports.")
