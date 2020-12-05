@@ -17,12 +17,11 @@ let input =
 let seatID: (String) -> Int = { $0.reduce(0) { return $0 * 2 + ("FL".contains($1) ? 0 : 1) } }
 
 let seatIDs = input.map(seatID).sorted(by: >)
-
 print("The highest seat ID is \(seatIDs.first!)")
 
 let gaps = zip(seatIDs, seatIDs.dropFirst())
 if let gap = gaps.first(where: { $0.0 - $0.1 == 2 }) {
   print("Your seat ID is:", gap.0 - 1)
 } else {
-  print("no gap?")
+  print("no gap? You need to fix your code.")
 }
