@@ -34,8 +34,7 @@ let (minSeat, maxSeat, sum) =
     .lazy
     .map(seatID)
     .reduce((Int.max, Int.min, 0)) { base, value in
-      if value == 0  { print("Found a zero!") }
-      return (min(base.0, value), max(base.1, value), base.2 + value)
+      (min(base.0, value), max(base.1, value), base.2 + value)
     }
 
 let expectedSum = (minSeat + maxSeat) * (maxSeat - minSeat + 1) / 2
