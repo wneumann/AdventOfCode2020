@@ -26,8 +26,8 @@ print("The total number of questions answered by all group members: ", groups.ma
 let toBits = { (ch: Character) -> UInt32 in UInt32(1) << (ch.asciiValue! - 97) }
 let countBits = { (ui: UInt32) -> Int in var n = ui, setBits = 0; while n > 0 { n = n & (n-1); setBits += 1}; return setBits }
 
-let any = groups.map { countBits($0.map { $0.map(toBits).reduce(0,|) }.reduce(0,|)) }.reduce(0,+)
-let all = groups.map { countBits($0.map { $0.map(toBits).reduce(0,|) }.reduce(UInt32.max,&)) }.reduce(0,+)
+let any = groups.map { countBits($0.lazy.map { $0.lazy.map(toBits).reduce(0,|) }.reduce(0,|)) }.reduce(0,+)
+let all = groups.map { countBits($0.lazy.map { $0.lazy.map(toBits).reduce(0,|) }.reduce(UInt32.max,&)) }.reduce(0,+)
 
 print("The total number of questions answered once by a group member is: ", any)
 print("The total number of questions answered by all group members is: ", all)
