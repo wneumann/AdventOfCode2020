@@ -37,7 +37,7 @@ for (container, contains) in parsedRules {
 }
 
 func findContainerFamily(_ bag: String) -> Set<String> {
-  let fam = flow[bag]!.containedIn
+  guard let fam = flow[bag]?.containedIn else { return [] }
   return fam.map(findContainerFamily).reduce(fam, { $0.union($1) } )
 }
 
