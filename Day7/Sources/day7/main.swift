@@ -37,26 +37,18 @@ for (container, contains) in parsedRules {
 }
 
 func findContainerFamily(_ bag: String) -> Set<String> {
-  guard let containers = flow[bag] else { return [] }
-  var family = containers.containedIn, parents = family
-  while !parents.isEmpty {
-    let nextGen = parents.compactMap { flow[$0]?.containedIn }.joined()
-    family.formUnion(nextGen)
-    parents = Set(nextGen)
-  }
-  return family
+  let fam = flow[bag]!.containedIn
+  return fam.map(findContainerFamily).reduce(fam, { $0.union($1) } )
 }
 
 let shinyFamily = findContainerFamily("shiny gold")
 print("There are \(shinyFamily.count) different bags that can contain a shiny gold bag.")
 
 func findFullCount(_ bag: String, depth: Int = 0) -> Int {
-  let contents = flow[bag]?.contains ?? [String: Int]()
-  if contents.isEmpty { return 1 }
-  return contents.map { (subBag, count) in
-    let subTotal = findFullCount(subBag, depth: depth+1)
-    return count * (subTotal)
-  }.reduce(1, +)
+  guard let contents = flow[bag]?.contains, !contents.isEmpty else { return 1 }
+  return contents
+    .map { (subBag, count) in count * findFullCount(subBag, depth: depth+1) }
+    .reduce(1, +)
 }
 
 let shinyContents = findFullCount("shiny gold", depth: 0) - 1
