@@ -1,33 +1,63 @@
 import Foundation
 
-let groups =
+let rules =
   try String(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1]), encoding: .utf8)
         .trimmingCharacters(in: .whitespacesAndNewlines)
-        .components(separatedBy: "\n\n")
-        .map { $0.components(separatedBy: .newlines) }
+        .components(separatedBy: "\n")
 
-func uniques(_ arrs: [String]) -> Int {
-  arrs.reduce(into: Set<Character>()) { base, value in
-    base.formUnion(value)
-  }.count
+func ruleParse(_ rule: String) -> (container: String, contains: [(String, Int)]) {
+  let parserX: Parser<[(String, Int)]> =
+    .choose(
+      Parser.string("no other bags").map { _ in [(String, Int)]() },
+      Parser.star(
+        zip(with: { ($1, $0) },
+          .int,
+          Parser.trim(
+            Parser.star(
+              Parser.char,
+              until: .choose(Parser<Void>.literal(" bags"), Parser<Void>.literal(" bag"))
+            ),
+            where: { $0.isWhitespace || $0.isPunctuation }).map{ String($0) })))
+
+  let split = rule.components(separatedBy: " bags contain ")
+  
+  return (container: split[0], contains: try! parserX.run(split[1]).match.get())
 }
 
-func repeats(_ arrs: [String]) -> Int {
-  arrs.dropFirst().reduce(into: Set<Character>(arrs.first!)) { base, value in
-    base.formIntersection(value)
-  }.count
+let parsedRules = rules.map(ruleParse)
+
+var flow = [String: (containedIn: Set<String>, contains: [String: Int])]()
+for (container, contains) in parsedRules {
+  let record = flow[container, default: (containedIn: [], contains: [:])]
+  flow[container] = (containedIn: record.containedIn, contains: Dictionary(uniqueKeysWithValues: contains))
+  for (containee,_) in contains {
+    let containeeRecord = flow[containee, default: (containedIn: [], contains: [:])]
+    flow[containee] = (containedIn: containeeRecord.containedIn.union([container]) , contains: containeeRecord.contains)
+  }
 }
 
-print("The total number of questions answered once by a group member: ", groups.map(uniques).reduce(0, +))
-print("The total number of questions answered by all group members: ", groups.map(repeats).reduce(0,+))
+func findContainerFamily(_ bag: String) -> Set<String> {
+  guard let containers = flow[bag] else { return [] }
+  var family = containers.containedIn, parents = family
+  while !parents.isEmpty {
+    let nextGen = parents.compactMap { flow[$0]?.containedIn }.joined()
+    family.formUnion(nextGen)
+    parents = Set(nextGen)
+  }
+  return family
+}
 
+let shinyFamily = findContainerFamily("shiny gold")
+print("There are \(shinyFamily.count) different bags that can contain a shiny gold bag.")
 
-// Alternate version using bit manipulation
-let toBits = { (ch: Character) -> UInt32 in UInt32(1) << (ch.asciiValue! - 97) }
-let countBits = { (ui: UInt32) -> Int in var n = ui, setBits = 0; while n > 0 { n = n & (n-1); setBits += 1}; return setBits }
+func findFullCount(_ bag: String, depth: Int = 0) -> Int {
+  let contents = flow[bag]?.contains ?? [String: Int]()
+  if contents.isEmpty { return 1 }
+  return contents.map { (subBag, count) in
+    let subTotal = findFullCount(subBag, depth: depth+1)
+    return count * (subTotal)
+  }.reduce(1, +)
+}
 
-let any = groups.map { countBits($0.lazy.map { $0.lazy.map(toBits).reduce(0,|) }.reduce(0,|)) }.reduce(0,+)
-let all = groups.map { countBits($0.lazy.map { $0.lazy.map(toBits).reduce(0,|) }.reduce(UInt32.max,&)) }.reduce(0,+)
-
-print("The total number of questions answered once by a group member is: ", any)
-print("The total number of questions answered by all group members is: ", all)
+let shinyContents = findFullCount("shiny gold", depth: 0) - 1
+print("There are \(shinyContents) bags inside 1 shiny gold bag.")
