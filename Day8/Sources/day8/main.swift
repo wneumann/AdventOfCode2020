@@ -1,21 +1,8 @@
 import Foundation
 
-let inputA =
+let input =
   try String(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1]), encoding: .utf8)
         .trimmingCharacters(in: .whitespacesAndNewlines)
-//        .components(separatedBy: "\n")
-
-let input = """
-nop +0
-acc +1
-jmp +4
-acc +3
-jmp -3
-acc -99
-acc +1
-jmp -4
-acc +6
-"""
 
 enum Operation {
   case nop(Int)
@@ -54,7 +41,6 @@ struct Processor {
   
   mutating func run() -> Int {
     repeat {
-//      print("ip: \(ip), acc: \(accumulator), visited: \(visited.sorted()), op: \(tape[ip])")
       visited.insert(ip)
       switch tape[ip] {
       case .nop: ip += 1
@@ -65,13 +51,12 @@ struct Processor {
         ip += offset
       case .exit: return accumulator
       }
-//      print("new IP: \(ip), quitting? \(visited.contains(ip) ? "yep" : "nope")")
     } while !visited.contains(ip)
     return accumulator
   }
 }
 
-let program = try opParser.run(inputA).match.get() + [.exit]
+let program = try opParser.run(input).match.get() + [.exit]
 var m1 = Processor(program: program)
 let final = m1.run()
 print("The final accumulator value is: \(final)")
@@ -93,6 +78,7 @@ func reachesZero(from instruction: Int, visited: Set<Int>, flipped: Int? = nil) 
     }
   guard instruction != 0 else { return flipped }
   if visited.contains(instruction) { return nil }
+  
   let reachables = program.indices.filter(reaches)
   for r in reachables {
     if let flip = reachesZero(from: r, visited: visited.union([instruction]), flipped: flipped) { return flip }
