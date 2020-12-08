@@ -10,24 +10,24 @@ enum Operation {
   case acc(Int)
   case exit
   
-  init(opcode: String, value: Int) {
-    switch opcode {
+  init(_ op: [String]) {
+    guard op.count > 1, let value = Int(op[1]) else { fatalError("Bad op split: \(op)") }
+    switch op[0] {
     case "nop": self = .nop(value)
     case "jmp": self = .jmp(value)
     case "acc": self = .acc(value)
-    default: fatalError("Unknown opcode: \(opcode): \(value)")
+    default: fatalError("Unknown opcode: \(op[0]): \(value)")
+    }
+  }
+  
+  mutating func flip() {
+    switch self {
+    case .jmp(let value): self = .nop(value)
+    case .nop(let value): self = .jmp(value)
+    default: ()
     }
   }
 }
-
-let opParser =
-  Parser.star(
-    zip(with: { Operation(opcode: $0, value: $1) },
-        Parser.keep(.choice([.string("nop"), .string("jmp"), .string("acc")]), discard: Parser.whitespace),
-        Parser.int
-    ),
-    separatedBy: .newlines
-  )
 
 struct Processor {
   private let tape: [Operation]
@@ -56,10 +56,12 @@ struct Processor {
   }
 }
 
-let program = try opParser.run(input).match.get() + [.exit]
+var program = input.components(separatedBy: .newlines).map { Operation($0.components(separatedBy: .whitespaces)) } + [.exit]
 var m1 = Processor(program: program)
+let star1StartTime = DispatchTime.now().uptimeNanoseconds
 let final = m1.run()
-print("The final accumulator value is: \(final)")
+let star1ElapsedTime = DispatchTime.now().uptimeNanoseconds - star1StartTime
+print("The final accumulator value is: \(final) | Time elapsed: \(star1ElapsedTime / 1_000)μs")
 
 func reachesZero(from instruction: Int, visited: Set<Int>, flipped: Int? = nil) -> Int? {
     let reaches: (Int) -> Bool = { ip in
@@ -89,22 +91,17 @@ func reachesZero(from instruction: Int, visited: Set<Int>, flipped: Int? = nil) 
   return nil
 }
 
-func patch(program: [Operation], at idx: Int) -> [Operation] {
-  var p2 = program
-  switch program[idx] {
-  case .jmp(let value): p2[idx] = .nop(value)
-  case .nop(let value): p2[idx] = .jmp(value)
-  default: break
-  }
-  return p2
-}
+let star2StartTime = DispatchTime.now().uptimeNanoseconds
+let flipper = reachesZero(from: program.indices.last!, visited: [])
+let star2ElapsedTime = DispatchTime.now().uptimeNanoseconds - star2StartTime
 
-if let flipper = reachesZero(from: program.indices.last!, visited: []) {
-  print("reaches zero: program[\(flipper)]: \(program[flipper])")
-  let patched = patch(program: program, at: flipper)
-  var m1 = Processor(program: patched)
+if let flipper = flipper {
+  print("Faulty instruction: program[\(flipper)]: \(program[flipper])")
+  program[flipper].flip()
+  print("patched[\(flipper)]: \(program[flipper])")
+  var m1 = Processor(program: program)
   let final = m1.run()
-  print("The final accumulator value is: \(final)")
+  print("The final accumulator value is: \(final) | Time elapsed: \(star2ElapsedTime / 1_000)μs")
 } else {
   print("you frogged up, buddy")
 }
