@@ -1,5 +1,12 @@
 import Foundation
 
+func time<Res>(_ proc: @autoclosure () -> Res) -> (UInt64, Res) {
+  let startTime = DispatchTime.now().uptimeNanoseconds
+  let star = proc()
+  let elapsedTime = DispatchTime.now().uptimeNanoseconds - startTime
+  return (elapsedTime, star)
+}
+
 let input =
   try String(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1]), encoding: .utf8)
         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -8,10 +15,10 @@ let input =
 
 extension Int {
   func hasSum(in pool: ArraySlice<Int>) -> Bool {
-    let set = Set(pool)
-    return set.contains { (val) -> Bool in
-      self != 2 * val && set.contains(self - val)
+    for p in pool {
+      if pool.contains(where: { $0 + p == self && $0 != p }) { return true }
     }
+    return false
   }
 }
 
@@ -24,29 +31,22 @@ func findStar1(input: [Int]) -> Int {
   fatalError("You frogged up, buddy.")
 }
 
-let star1StartTime = DispatchTime.now().uptimeNanoseconds
-let star1 = findStar1(input: input)
-let star1ElapsedTime = DispatchTime.now().uptimeNanoseconds - star1StartTime
-
-print("The key is: \(star1) | Time elapsed: \(star1ElapsedTime / 1_000)μs")
+let (elapsed, star1) = time(findStar1(input: input))
+print("The key is: \(star1) | Time elapsed: \(elapsed / 1_000)μs")
 
 func findStar2(input: [Int], star1 target: Int) -> Int {
-  var back = 0, front = 0, sum = input[0]//, nums = input[(idx+1)...]
-  while front < input.count {
+  var back = 0, sum = input[0]
+  for front in input.indices {
     if sum == target { let range = input[back...front]; return range.min()! + range.max()! }
     let next = input[front + 1]
     while sum > target - next && back <= front {
       sum -= input[back]
       back += 1
     }
-    front += 1
     sum += next
   }
   fatalError("Froggin' makes me feel good!")
 }
 
-let star2StartTime = DispatchTime.now().uptimeNanoseconds
-let star2 = findStar2(input: input, star1: star1)
-let star2ElapsedTime = DispatchTime.now().uptimeNanoseconds - star2StartTime
-
-print("star2: \(star2) | Time elapsed: \(star2ElapsedTime / 1_000)μs")
+let (elapsed2, star2) = time(findStar2(input: input, star1: star1))
+print("star2: \(star2) | Time elapsed: \(elapsed2 / 1_000)μs")
