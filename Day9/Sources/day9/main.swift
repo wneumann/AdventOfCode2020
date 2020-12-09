@@ -17,10 +17,7 @@ let input =
 // MARK: - Real work happens here
 extension Int {
   func hasSum(in pool: ArraySlice<Int>) -> Bool {
-    for p in pool {
-      if pool.contains(where: { $0 + p == self && $0 != p }) { return true }
-    }
-    return false
+    pool.contains(where: { p in pool.contains(where: { $0 + p == self && $0 != p }) } )
   }
 }
 
