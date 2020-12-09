@@ -1,5 +1,6 @@
 import Foundation
 
+// MARK: - Utilty crud
 func time<Res>(_ proc: @autoclosure () -> Res) -> (UInt64, Res) {
   let startTime = DispatchTime.now().uptimeNanoseconds
   let star = proc()
@@ -13,6 +14,7 @@ let input =
         .components(separatedBy: "\n")
         .compactMap(Int.init)
 
+// MARK: - Real work happens here
 extension Int {
   func hasSum(in pool: ArraySlice<Int>) -> Bool {
     for p in pool {
