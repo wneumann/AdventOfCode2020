@@ -132,6 +132,7 @@ struct Ferry: CustomStringConvertible {
   }
 }
 
+// MARK: - Run the code, report the result
 func star1(debug: Bool = false) -> Int {
   let ferry = Ferry(input)
   ferry.run(debug: debug)
