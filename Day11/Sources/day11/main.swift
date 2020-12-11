@@ -32,93 +32,120 @@ enum State: CustomStringConvertible {
   }
 }
 
-//extension Array where Element == State {
-//  var snapshot: [String] { self.map(\.description) }
-//}
-
-let table = input.map { row in row.map(State.init) }
-let mkStates = { () in Array(table.joined()) }
-let rows = table.indices
-let cols = table[0].indices
-
-func getRC(_ l: Int) -> (Int, Int) {
-  return(l / cols.count, l % cols.count)
-}
-
-func getNeighbors(of l: Int, in states: [State]) -> [State] {
-  let (r,c) = getRC(l)
-  let ns = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-    .map { (r + $0.0, c + $0.1) }
-    .filter({ rows ~= $0.0 && cols ~= $0.1 })
-    .map { cols.count * $0.0 + $0.1 }
-  return ns.map { states[$0] }
-}
-
-func update(states: [State], tolerance: Int, gatherNeighbors: (Int, [State]) -> [State] = getNeighbors(of:in:)) -> [State] {
-  states.enumerated().map { index, state -> State in
-    let neighbors = gatherNeighbors(index, states)
+class Cell: CustomStringConvertible {
+  var state: State
+  var next: State
+  var neighbors = [Cell]()
+  var tolerance: Int
+  var description: String { state.description }
+  var isSteadyState: Bool { state == next }
+  
+  init(_ ch: Character, tolerance: Int) {
+    state = State(ch)
+    self.tolerance = tolerance
+    next = state
+  }
+  
+  func prepareForUpdate() {
+    guard state != .floor else { return }
+    let neighborhood = neighbors.map(\.state)
     switch state {
-    case .occupied: if neighbors.filter(\.isOccupied).count >= tolerance { return .empty }
-    case .empty: if neighbors.allSatisfy(\.isEmpty) { return .occupied }
-    case .floor: return .floor
+    case .occupied: if neighborhood.filter(\.isOccupied).count >= tolerance { next = .empty }
+    case .empty: if neighborhood.allSatisfy(\.isEmpty) { next = .occupied }
+    case .floor: return
     }
-    return state
+  }
+  
+  func update() {
+    state = next
   }
 }
 
-//func printStates(_ states: [State]) {
-//  var substates = states[...]
-//  while !substates.isEmpty {
-//    let line = substates.prefix(cols.count).map(\.description).joined()
-//    print(line)
-//    substates = substates.dropFirst(cols.count)
-//  }
-//  print("\n\n")
-//}
-
-func star1(_ states: [State]) -> Int {
-  var states = states
-  var cnt = 0
-  var newStates = update(states: states, tolerance: 4)
-  while newStates != states && cnt < 1000 {
-    states = newStates
-    newStates = update(states: states, tolerance: 4)
-    cnt += 1
+struct Ferry: CustomStringConvertible {
+  var cells: [Cell]
+  private var rows: Range<Int>
+  private var cols: Range<Int>
+  private let tolerance: Int
+  var description: String {
+    var subcells = cells[...], res = ""
+    while !subcells.isEmpty {
+      res += subcells.prefix(cols.count).map(\.description).joined()
+      res += "\n"
+      subcells.removeFirst(cols.count)
+    }
+    return res + "\n"
   }
-  return states.filter(\.isOccupied).count
-}
+  var occupied: Int { cells.filter { $0.state.isOccupied }.count }
+  
+  init(_ input: [String], tolerance: Int = 4, visible: Bool = false) { //, gatherNeighbors: (Int, Int, [Cell]) -> [Cell]) {
+    let table = input.map { row in row.map { Cell($0, tolerance: tolerance) } }
+    cells = Array(table.joined())
+    rows = table.indices
+    cols = table[0].indices
+    self.tolerance = tolerance
+    
+    for (index, cell) in cells.enumerated() {
+      cell.neighbors = visible ? getVisibleNeighbors(of: index) : getNeighbors(of: index)
+    }
+  }
+  
+  private func getNeighbors(of l: Int) -> [Cell] {
+    let (r,c) = (l / cols.count, l % cols.count)
+    let ns = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+      .map { (r + $0.0, c + $0.1) }
+      .filter({ rows ~= $0.0 && cols ~= $0.1 })
+      .map { cols.count * $0.0 + $0.1 }
+    return ns.map { cells[$0] }
+  }
 
-let (t1,floops) = time(star1(mkStates()))
-print("***** star1: \(floops) | elapsed time: \(t1 / 1000)µs")
-
-func getVisibleNeighbors(of l: Int, in states: [State]) -> [State] {
-  let rc = getRC(l)
-  func look(_ direction: (Int, Int)) -> State? {
-    var (y, x) = direction, (r,c) = (rc.0+y, rc.1+x)
-    while rows ~= r && cols ~= c {
-      switch states[cols.count * r + c] {
-      case .floor: (r, c) = (r+y, c+x)
-      case let state: return state
+  private func getVisibleNeighbors(of l: Int) -> [Cell] {
+    let (r,c) = (l / cols.count, l % cols.count)
+    func look(_ direction: (Int, Int)) -> Cell? {
+      var (y, x) = direction, (r,c) = (r+y, c+x)
+      while rows ~= r && cols ~= c {
+        let cell = cells[cols.count * r + c]
+        if cell.state != .floor { return cell }
+        (r, c) = (r+y, c+x)
       }
+      return nil
     }
-    return nil
+    return [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)].compactMap(look)
   }
-  return [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)].compactMap(look)
+
+  @discardableResult func update() -> Bool {
+    cells.forEach{ $0.prepareForUpdate() }
+    if cells.allSatisfy(\.isSteadyState) {
+      return false
+    } else {
+      cells.forEach { $0.update() }
+      return true
+    }
+  }
+  
+  func run(debug: Bool = false) {
+    if debug { print(description) }
+    var safety = 0, stillEvolving: Bool
+    repeat {
+      stillEvolving = update()
+      safety += 1
+    } while stillEvolving && safety < 1000
+  }
 }
 
-
-func star2(_ states: [State]) -> Int {
-  var states = states
-  var cnt = 0
-  var newStates = update(states: states, tolerance: 5, gatherNeighbors: getVisibleNeighbors(of:in:))
-  while newStates != states && cnt < 1000 {
-    states = newStates
-    newStates = update(states: states, tolerance: 5, gatherNeighbors: getVisibleNeighbors(of:in:))
-    cnt += 1
-  }
-  if cnt > 1000 { print("overlooped?") }
-  return states.filter(\.isOccupied).count
+func star1(debug: Bool = false) -> Int {
+  let ferry = Ferry(input)
+  ferry.run(debug: debug)
+  return ferry.occupied
 }
 
-let (t2,ploops) = time(star2(mkStates()))
-print("***** star2: \(ploops) | elapsed time: \(t2 / 1000)µs")
+let (t1, value1) = time(star1(debug: false))
+print("star 1: \(value1) | \(t1 / 1000)µs")
+
+func star2(debug: Bool = false) -> Int {
+  let ferry = Ferry(input, tolerance: 5, visible: true)
+  ferry.run(debug: debug)
+  return ferry.occupied
+}
+
+let (t2, value2) = time(star2(debug: false))
+print("star 1: \(value2) | \(t2 / 1000)µs")
