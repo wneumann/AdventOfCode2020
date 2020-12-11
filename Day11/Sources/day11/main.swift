@@ -46,13 +46,17 @@ class Cell: CustomStringConvertible {
     next = state
   }
   
-  func prepareForUpdate() {
-    guard state != .floor else { return }
+  @discardableResult func prepareForUpdate() -> Bool {
+    guard state != .floor else { return false }
     let neighborhood = neighbors.map(\.state)
-    switch state {
-    case .occupied: if neighborhood.filter(\.isOccupied).count >= tolerance { next = .empty }
-    case .empty: if neighborhood.allSatisfy(\.isEmpty) { next = .occupied }
-    case .floor: return
+    if state == .occupied && neighborhood.filter(\.isOccupied).count >= tolerance {
+      next = .empty
+      return true
+    } else if .empty == state && neighborhood.allSatisfy(\.isEmpty) {
+      next = .occupied
+      return true
+    } else {
+      return false
     }
   }
   
@@ -62,63 +66,56 @@ class Cell: CustomStringConvertible {
 }
 
 struct Ferry: CustomStringConvertible {
-  var cells: [Cell]
+  var cells: [[Cell]]
   private var rows: Range<Int>
   private var cols: Range<Int>
   private let tolerance: Int
   var description: String {
-    var subcells = cells[...], res = ""
-    while !subcells.isEmpty {
-      res += subcells.prefix(cols.count).map(\.description).joined()
-      res += "\n"
-      subcells.removeFirst(cols.count)
-    }
-    return res + "\n"
+    cells.map { row in
+      row.map(\.description).joined()
+    }.joined(separator: "\n") + "\n"
   }
-  var occupied: Int { cells.filter { $0.state.isOccupied }.count }
+  var occupied: Int { cells.map({ $0.filter { $0.state.isOccupied }.count }).reduce(0, +) }
   
   init(_ input: [String], tolerance: Int = 4, visible: Bool = false) { //, gatherNeighbors: (Int, Int, [Cell]) -> [Cell]) {
-    let table = input.map { row in row.map { Cell($0, tolerance: tolerance) } }
-    cells = Array(table.joined())
-    rows = table.indices
-    cols = table[0].indices
+    cells = input.map { row in row.map { Cell($0, tolerance: tolerance) } }
+    rows = cells.indices
+    cols = cells[0].indices
     self.tolerance = tolerance
     
-    for (index, cell) in cells.enumerated() {
-      cell.neighbors = visible ? getVisibleNeighbors(of: index) : getNeighbors(of: index)
+    for (r, row) in cells.enumerated() {
+      for (c, cell) in row.enumerated() {
+        cell.neighbors = getNeighbors(of: (r, c), visible: visible)
+      }
     }
   }
   
-  private func getNeighbors(of l: Int) -> [Cell] {
-    let (r,c) = (l / cols.count, l % cols.count)
-    let ns = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-      .map { (r + $0.0, c + $0.1) }
-      .filter({ rows ~= $0.0 && cols ~= $0.1 })
-      .map { cols.count * $0.0 + $0.1 }
-    return ns.map { cells[$0] }
-  }
-
-  private func getVisibleNeighbors(of l: Int) -> [Cell] {
-    let (r,c) = (l / cols.count, l % cols.count)
+  private func getNeighbors(of rc: (Int, Int), visible: Bool) -> [Cell] {
+    let (r,c) = rc
+    let directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
     func look(_ direction: (Int, Int)) -> Cell? {
-      var (y, x) = direction, (r,c) = (r+y, c+x)
-      while rows ~= r && cols ~= c {
-        let cell = cells[cols.count * r + c]
+      var (y, x) = direction, (r,c) = (r+y, c+x), steps = visible ? Int.max : 1
+      while rows ~= r && cols ~= c && steps > 0 {
+        steps -= 1
+        let cell = cells[r][c]
         if cell.state != .floor { return cell }
         (r, c) = (r+y, c+x)
       }
       return nil
     }
-    return [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)].compactMap(look)
+    
+    return directions.compactMap(look)
   }
 
   @discardableResult func update() -> Bool {
-    cells.forEach{ $0.prepareForUpdate() }
-    if cells.allSatisfy(\.isSteadyState) {
-      return false
-    } else {
-      cells.forEach { $0.update() }
+    let stillEvolving = cells.reduce(false) { evolving, row in
+      row.reduce(false) { changed, cell in cell.prepareForUpdate() || changed }  || evolving
+    }
+    if stillEvolving {
+      cells.forEach { row in row.forEach { $0.update() } }
       return true
+    } else {
+      return false
     }
   }
   
@@ -127,6 +124,7 @@ struct Ferry: CustomStringConvertible {
     var safety = 0, stillEvolving: Bool
     repeat {
       stillEvolving = update()
+      if debug { print(description) }
       safety += 1
     } while stillEvolving && safety < 1000
   }
@@ -149,4 +147,4 @@ func star2(debug: Bool = false) -> Int {
 }
 
 let (t2, value2) = time(star2(debug: false))
-print("star 1: \(value2) | \(t2 / 1000)µs")
+print("star 2: \(value2) | \(t2 / 1000)µs")
