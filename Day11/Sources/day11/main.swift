@@ -15,21 +15,14 @@ let input =
 
 // MARK: - Real work happens here
 
-enum State: CustomStringConvertible {
-  case occupied, empty, floor
+enum State: String, CustomStringConvertible {
+  case occupied = "#"
+  case empty = "L"
+  case floor = "."
   
-  init(_ ch: Character) {
-    self = ch == "L" ? .empty : .floor
-  }
   var isOccupied: Bool { self == .occupied }
   var isEmpty: Bool { self != .occupied }
-  var description: String {
-    switch self {
-    case .empty: return "L"
-    case .occupied: return "#"
-    case .floor: return "."
-    }
-  }
+  var description: String { self.rawValue }
 }
 
 class Cell: CustomStringConvertible {
@@ -38,10 +31,9 @@ class Cell: CustomStringConvertible {
   var neighbors = [Cell]()
   var tolerance: Int
   var description: String { state.description }
-  var isSteadyState: Bool { state == next }
   
   init(_ ch: Character, tolerance: Int) {
-    state = State(ch)
+    state = State(rawValue: String(ch))!
     self.tolerance = tolerance
     next = state
   }
@@ -77,7 +69,7 @@ struct Ferry: CustomStringConvertible {
   }
   var occupied: Int { cells.map({ $0.filter { $0.state.isOccupied }.count }).reduce(0, +) }
   
-  init(_ input: [String], tolerance: Int = 4, visible: Bool = false) { //, gatherNeighbors: (Int, Int, [Cell]) -> [Cell]) {
+  init(_ input: [String], tolerance: Int = 4, visible: Bool = false) {
     cells = input.map { row in row.map { Cell($0, tolerance: tolerance) } }
     rows = cells.indices
     cols = cells[0].indices
