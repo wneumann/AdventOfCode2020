@@ -72,7 +72,7 @@ func star1(input: [(String, Int)]) -> Int {
 }
 
 var (elapsed, star) = time(star1(input: commands))
-print("The manhattan discance is: \(star) | Time elapsed: \(elapsed / 1_000)μs")
+print("⭐️ The manhattan distance is: \(star) | Time elapsed: \(elapsed / 1_000)μs")
 
 func star2(input: [(String, Int)]) -> Int {
   var ship = Ship()
@@ -81,4 +81,4 @@ func star2(input: [(String, Int)]) -> Int {
 }
 
 (elapsed, star) = time(star2(input: commands))
-print("The manhattan distance is: \(star) | Time elapsed: \(elapsed / 1_000)μs")
+print("🌟 The manhattan distance is: \(star) | Time elapsed: \(elapsed / 1_000)μs")
