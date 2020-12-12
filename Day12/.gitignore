@@ -4,5 +4,6 @@
 /*.xcodeproj
 xcuserdata/
 input.txt
+inp.txt
 Package.resolved
 /.swiftpm
