@@ -41,10 +41,6 @@ func star1(_ input: [String]) -> Int {
   return bestBus.0 * bestBus.1
 }
 
-let (t1, value1) = time(star1(input))
-print("star 1: \(value1) | \(t1 / 1000)µs")
-
-
 // Knuth's modular inverse
 func modInv(value: Int, modulus: Int) -> Int? {
   var inv = 1, gcd = value, v1 = 0, v3 = modulus
@@ -68,26 +64,9 @@ func chineseRemainder(_ mas: [(Int, Int)]) -> Int {
   return zip(ws, ais).reduce(0, { ($0 + ($1.0 * $1.1)) % m })
 }
 
+// MARK: - Run the code, report the result
+let (t1, value1) = time(star1(input))
+print("star 1: \(value1) | \(t1 / 1000)µs")
+
 let (t2, value2) = time(chineseRemainder(busIDs))
 print("star 2: \(value2) | \(t2 / 1000)µs")
-
-//print("Star2: \(chineseRemainder(busIDs))")
-
-// MARK: - Run the code, report the result
-//func star1(debug: Bool = false) -> Int {
-//  let ferry = Ferry(input)
-//  ferry.run(debug: debug)
-//  return ferry.occupied
-//}
-//
-//let (t1, value1) = time(star1(debug: false))
-//print("star 1: \(value1) | \(t1 / 1000)µs")
-//
-//func star2(debug: Bool = false) -> Int {
-//  let ferry = Ferry(input, tolerance: 5, visible: true)
-//  ferry.run(debug: debug)
-//  return ferry.occupied
-//}
-//
-//let (t2, value2) = time(star2(debug: false))
-//print("star 2: \(value2) | \(t2 / 1000)µs")
