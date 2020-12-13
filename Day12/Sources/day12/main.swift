@@ -33,7 +33,7 @@ struct Ship {
     case "E": position = (position.0, position.1 + value)
     case "W": position = (position.0, position.1 - value)
     case "R": heading = (heading + (360 - value)) % 360
-    case "L": heading = (heading + (360 + value)) % 360
+    case "L": heading = (heading + value) % 360
     case "F":
       guard let (y, x) = Ship.forward[heading] else { return }
       position = (position.0 + (y * value), position.1 + (x * value) )
@@ -42,6 +42,7 @@ struct Ship {
   }
     
   mutating func steer(command: String, value: Int) {
+    print("command: \(command), value: \(value):\n\t\(position) @ \(waypoint) -> ", terminator: "")
     switch command {
     case "N": waypoint = (waypoint.0 + value, waypoint.1)
     case "S": waypoint = (waypoint.0 - value, waypoint.1)
@@ -52,17 +53,14 @@ struct Ship {
     case "F": position = (position.0 + (waypoint.0 * value), position.1 + (waypoint.1 * value) )
     default: return
     }
+    print("\(position) @ \(waypoint)")
   }
 }
 
 // MARK: - Execution and timing
-func setup(input: [String]) -> [(String, Int)] {
-  input.map {
-    (String($0.first!), Int($0.dropFirst())!)
-  }
-}
+let setup = { (input: [String]) in input.map { (String($0.first!), Int($0.dropFirst())!) } }
 
-let (elapsedSetup, commands) = time(setup(input: input))
+let (elapsedSetup, commands) = time(setup(input))
 print("Setup time elapsed: \(elapsedSetup / 1_000)μs")
 
 func star1(input: [(String, Int)]) -> Int {
