@@ -23,12 +23,13 @@ extension Int {
 
 // MARK: - Real work happens here
 let busIDs: [(Int, Int)] =
-  zip(input[1].components(separatedBy: ","), 0...)
+  input[1]
+  .components(separatedBy: ",")
+  .enumerated()
   .compactMap {
-    guard let i = Int($0) else { return nil }
-    return (i, $1) }
+    guard let i = Int($1) else { return nil }
+    return (i, $0) }
   .map { (m, v: Int) in (m, (-v).mod(m)) }
-//print("busIDs: ", busIDs)
 
 func findBestBus(arrivingAt time: Int, busIDs: [(Int, Int)]) -> (Int, Int) {
   busIDs.map { id in (-(time % id.0) + id.0, id.0) }.min(by: { $0.0 < $1.0 })!
@@ -37,7 +38,6 @@ func findBestBus(arrivingAt time: Int, busIDs: [(Int, Int)]) -> (Int, Int) {
 func star1(_ input: [String]) -> Int {
   let time = Int(input[0])!
   let bestBus = findBestBus(arrivingAt: time, busIDs: busIDs)
-//  print("The best bus is \(bestBus). The product is \(bestBus.0 * bestBus.1)")
   return bestBus.0 * bestBus.1
 }
 
