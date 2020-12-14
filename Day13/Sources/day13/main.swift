@@ -54,14 +54,13 @@ func modInv(value: Int, modulus: Int) -> Int? {
 }
 
 func chineseRemainder(_ mas: [(Int, Int)]) -> Int {
-  let mis = mas.map(\.0), m = mis.reduce(1, *)
-  let ais = mas.map(\.1)
-  let ws = mis.map { mi -> Int in
+  let m = mas.lazy.map(\.0).reduce(1, *)
+  let was = mas.map { (mi, ai) -> (Int, Int) in
     let zi = m / mi
     guard let yi = modInv(value: zi, modulus: mi) else { fatalError("\(zi)^-1 mod \(mi) does not exist!") }
-    return (yi * zi) % m
+    return ((yi * zi) % m, ai)
   }
-  return zip(ws, ais).reduce(0, { ($0 + ($1.0 * $1.1)) % m })
+  return was.reduce(0, { ($0 + ($1.0 * $1.1)) % m })
 }
 
 // MARK: - Run the code, report the result
