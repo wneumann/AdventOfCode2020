@@ -12,13 +12,11 @@ func time<Res>(_ proc: @autoclosure () -> Res) -> (UInt64, Res) {
 // MARK: - Real work happens here
 func vanEck(_ input: [Int], _ target: Int) -> Int {
   var gameDict = Dictionary(uniqueKeysWithValues: zip(input.dropLast(), 1...)),
-      nextNum = input.last!,
-      count = input.count
-  while count < target {
+      nextNum = input.last!
+  for count in input.count ..< target {
     let lastNum = count - gameDict[nextNum, default: count]
     gameDict[nextNum] = count
     nextNum = lastNum
-    count += 1
   }
   return nextNum
 }
