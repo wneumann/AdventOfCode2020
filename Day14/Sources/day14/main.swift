@@ -43,14 +43,14 @@ func star1(_ input: [Line]) -> Int {
           maskedVal &= ~(1 << pos)
         }
       }
-      print("mam[\(addr)] <- \(maskedVal)")
+//      print("mam[\(addr)] <- \(maskedVal)")
       memory[addr] = maskedVal
     }
   }
   return memory.values.reduce(0, +)
 }
 
-func intMask(address: Int, mask: Substring, key: Int) -> Int {
+func intMask(address: Int, mask: Substring, key: Int) -> String {
   var maskedAddress = "", keyVal = key, addressVal = address
   for bit in mask.reversed() {
     switch bit {
@@ -64,12 +64,13 @@ func intMask(address: Int, mask: Substring, key: Int) -> Int {
     }
     addressVal >>= 1
   }
-  return Int(String(maskedAddress.reversed()), radix: 2)!
+//  return Int(String(maskedAddress.reversed()), radix: 2)!
+  return maskedAddress
 }
 
 
 func star2(_ input: [Line]) -> Int {
-  var memory = [Int: Int](), mask = String(repeating: "X", count: 36)[...]
+  var memory = [String: Int](), mask = String(repeating: "X", count: 36)[...]
 
   input.forEach { instruction in
     switch instruction {
