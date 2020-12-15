@@ -10,7 +10,7 @@ func time<Res>(_ proc: @autoclosure () -> Res) -> (UInt64, Res) {
 
 
 // MARK: - Real work happens here
-func star1(_ input: [Int], _ target: Int) -> Int {
+func vanEck(_ input: [Int], _ target: Int) -> Int {
   var gameDict = Dictionary(uniqueKeysWithValues: zip(input.dropLast(), 1...)),
       nextNum = input.last!,
       count = input.count
@@ -24,8 +24,8 @@ func star1(_ input: [Int], _ target: Int) -> Int {
 }
 
 // MARK: - Run the code, report the result
- let (t1, value1) = time(star1([16,11,15,0,1,7], 2020))
- print("star 1: \(value1) | \(t1 / 1000)µs")
+ let (t1, star1) = time(vanEck([16,11,15,0,1,7], 2020))
+ print("star 1: \(star1) | \(t1 / 1000)µs")
  
- let (t2, value2) = time(star1([16,11,15,0,1,7], 30000000))
- print("star 2: \(value2) | \(t2 / 1000)µs")
+ let (t2, star2) = time(vanEck([16,11,15,0,1,7], 30000000))
+ print("star 2: \(star2) | \(t2 / 1000)µs")
