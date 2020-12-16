@@ -25,8 +25,8 @@ func makeRangeSet(_ rangeStr: String) -> RangeSet<Int> {
 
 // MARK: - Real work happens here
 let rangeInput = input[0].map { $0.components(separatedBy: ": ") }
-let ticket = input[1][1].components(separatedBy: ",").compactMap { Int($0)! }
-let otherTickets = input[2].dropFirst().map { $0.components(separatedBy: ",").compactMap { Int($0)! } }
+let ticket = input[1][1].components(separatedBy: ",").compactMap { Int($0) }
+let otherTickets = input[2].dropFirst().map { $0.components(separatedBy: ",").compactMap { Int($0) } }
 let rangeDict = Dictionary(uniqueKeysWithValues: rangeInput.map { ($0[0], makeRangeSet($0[1])) })
 let validRanges = rangeDict.values.reduce(into: RangeSet<Int>(), { $0.formUnion($1) })
 
@@ -54,7 +54,7 @@ func star2() -> Int {
   }
   let departures = singles.filter { $0.element.first!.hasPrefix("departure") }
 
-  return departures.map(\.offset).map { ticket[$0] }.reduce(1, *)
+  return departures.lazy.map(\.offset).map { ticket[$0] }.reduce(1, *)
 
 }
 
