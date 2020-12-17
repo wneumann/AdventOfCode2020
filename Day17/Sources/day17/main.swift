@@ -14,7 +14,6 @@ let input =
         .components(separatedBy: "\n")
 
 // MARK: - Real work happens here
-//typealias Tableaux = [Position: Cell]
 typealias Tableaux = [Position: Cell]
 
 struct Position: Hashable, Comparable {
