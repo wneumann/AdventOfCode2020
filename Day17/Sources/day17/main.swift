@@ -32,9 +32,7 @@ class Cell {
   let position: Position
   var active: Bool
   var nextState: Bool
-  var neighbors: [Position]
-
-  init(position: Position, state: Character) {
+  var neighbors: [Position] {
     func mkDeltas(_ dimensions: Int) -> [[Int]] {
       func appendDelta(_ acc: [[Int]]) -> [[Int]] {
         (-1...1).reduce(into: [[Int]](), { res, i in res.append(contentsOf: acc.map { $0 + [i] }) })
@@ -43,12 +41,14 @@ class Cell {
         .reduce(into: ([[]] as [[Int]]), { base, _ in base = appendDelta(base) })
         .filter { $0 != Array(repeating: 0, count: dimensions) }
     }
+    let deltas = mkDeltas(position.dimensions.count)
+    return deltas.map { Position(dimensions: zip(position.dimensions, $0).map(+)) }
+  }
 
+  init(position: Position, state: Character) {
     self.position = position
     active = state == "#"
     nextState = !active
-    let deltas = mkDeltas(position.dimensions.count)
-    neighbors = deltas.map { Position(dimensions: zip(position.dimensions, $0).map(+)) }
   }
 
   func prepareForUpdate(_ tableaux: Tableaux) {
@@ -77,7 +77,7 @@ func makeTableaux(_ input: [String], dimensions: Int = 3) -> Tableaux {
   return tableaux
 }
 
-func updateX(tableaux: inout Tableaux) {
+func update(tableaux: inout Tableaux) {
   let neighborhood = tableaux.values.map(\.neighbors).reduce(into: Set<Position>(), { $0.formUnion($1) })
   for position in neighborhood {
     if let cell = tableaux[position] {
@@ -92,16 +92,20 @@ func updateX(tableaux: inout Tableaux) {
 }
 
 // MARK: - Run the code, report the result
-func star(_ dims: Int) -> Int {
+func star(_ dims: Int, _ cycles: Int) -> Int {
   var tableaux = makeTableaux(input, dimensions: dims)
-  for _ in 1...6 {
-    updateX(tableaux: &tableaux)
+  for _ in 1...cycles {
+    print(".")
+    update(tableaux: &tableaux)
   }
   return tableaux.values.filter(\.active).count
 }
 
-let (t1, value1) = time(star(3))
+let (t1, value1) = time(star(3, 6))
 print("star 1: \(value1) | \(t1 / 1000)µs")
 
-let (t2, value2) = time(star(4))
+let (t2, value2) = time(star(4, 6))
 print("star 2: \(value2) | \(t2 / 1000)µs")
+
+let (t3, value3) = time(star(6, 4))
+print("star 3: \(value3) | \(t3 / 1000)µs")
