@@ -23,26 +23,26 @@ func eval(_ str: String, precedence p: (Character) -> Int) -> Int {
     case "(": opStack.append(ch)
     case ")":
       while let op = opStack.popLast(), op != "(" {
-        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("empty numStack - ch: \(ch), numStack: \(numStack), opStack: \(opStack) - remaining \(sstr)") }
+        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError() }
         numStack.append(op == "+" ? n1 + n2 : n1 * n2)
-    }
+      }
     case "+", "*":
       while !opStack.isEmpty, let topOp = opStack.last, p(ch) <= p(topOp) {
         let op = opStack.popLast()!
-        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("empty numStack - ch: \(ch), numStack: \(numStack), opStack: \(opStack) - remaining \(sstr)") }
+        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError() }
         numStack.append(op == "+" ? n1 + n2 : n1 * n2)
       }
       opStack.append(ch)
     default:
-      ()
+      continue
     }
   }
   while !opStack.isEmpty {
     let op = opStack.popLast()!
-    guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("-- empty numStack - numStack: \(numStack), opStack: \(opStack)") }
+    guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError() }
     numStack.append(op == "+" ? n1 + n2 : n1 * n2)
   }
-  guard numStack.count == 1 else { fatalError("Too many (or too few) values on numStack? - numStack: \(numStack), opStack: \(opStack)") }
+  guard numStack.count == 1 else { fatalError() }
   return numStack.popLast()!
 }
 
