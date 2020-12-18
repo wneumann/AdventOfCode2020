@@ -14,88 +14,52 @@ let input =
         .components(separatedBy: "\n")
 
 // MARK: - Real work happens here
-enum Oper: Character {
-  case plus = "+", times = "*"
-}
-
-enum Expr: CustomStringConvertible {
-  case num(Int)
-  indirect case add(Expr, Expr)
-  indirect case mult(Expr, Expr)
-  
-  var description: String {
-    switch self {
-    case .num(let n): return "\(n)"
-    case let .exp(e1, op, e2):
-      return "[\(e1) \(op.rawValue) \(e2)]"
-    }
-  }
-}
-
-func parse(_ str: inout Substring) -> (Expr, Substring) {
-  var exp: Expr?
-  var op: Oper?
-  let pristine = String(str)
-  
-  while !str.isEmpty {
-    let ch = str.popFirst()!
+func eval(_ str: String, precedence p: (Character) -> Int) -> Int {
+  var numStack = [Int](), opStack = [Character](), sstr = str[...]
+  while !sstr.isEmpty {
+    let ch = sstr.popFirst()!
     switch ch {
-    case "0"..."9":
-      let digit = Expr.num(Int(String(ch))!)
-      if let e1 = exp, let o = op { exp = .exp(e1, o, digit); op = nil } else { exp = digit }
-    case "+", "*":
-      if exp != nil {
-        if op == nil {
-          op = Oper(rawValue: ch)!
-        } else {
-          fatalError("'+' found following op \(op!) - pristine: \(pristine)")
-        }
-      } else { fatalError("'+' found without leading expr' - pristine: \(pristine)") }
-     case "(":
-      let (ex, ss) = parse(&str)
-      str = ss
-      if let e1 = exp, let o = op {  exp = .exp(e1, o, ex); op = nil } else { exp = ex }
+    case "0"..."9": numStack.append(Int(String(ch))!)
+    case "(": opStack.append(ch)
     case ")":
-      guard exp != nil, op == nil else { fatalError("incomplete expr ending with ')' - pristine: \(pristine)") }
-      return (exp!, str)
-    default: continue
+      while let op = opStack.popLast(), op != "(" {
+        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("empty numStack - ch: \(ch), numStack: \(numStack), opStack: \(opStack) - remaining \(sstr)") }
+        numStack.append(op == "+" ? n1 + n2 : n1 * n2)
+    }
+    case "+", "*":
+      while !opStack.isEmpty, let topOp = opStack.last, p(ch) <= p(topOp) {
+        let op = opStack.popLast()!
+        guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("empty numStack - ch: \(ch), numStack: \(numStack), opStack: \(opStack) - remaining \(sstr)") }
+        numStack.append(op == "+" ? n1 + n2 : n1 * n2)
+      }
+      opStack.append(ch)
+    default:
+      ()
     }
   }
-  if let e = exp {
-    if let o = op { fatalError("weirdness hanging off end - pristine: \(pristine) exp: \(e), op: \(o)") } else { return (e, str) }
-  } else {
-    fatalError("nothing found? pristine: \(pristine)")
+  while !opStack.isEmpty {
+    let op = opStack.popLast()!
+    guard let n1 = numStack.popLast(), let n2 = numStack.popLast() else { fatalError("-- empty numStack - numStack: \(numStack), opStack: \(opStack)") }
+    numStack.append(op == "+" ? n1 + n2 : n1 * n2)
   }
+  guard numStack.count == 1 else { fatalError("Too many (or too few) values on numStack? - numStack: \(numStack), opStack: \(opStack)") }
+  return numStack.popLast()!
 }
 
-func runParser(_ str: String) -> Expr {
-  var ss = str[...]
-  let (exp, _) = parse(&ss)
-  return exp
-}
-
-func eval(_ expr: Expr) -> Int {
-  switch expr {
-  case .num(let n): return n
-  case let .exp(e1, op, e2):
-    let i1 = eval(e1), i2 = eval(e2)
-    switch op {
-    case .plus: return i1 + i2
-    case .times: return i1 * i2
-    }
-  }
-}
+let prec1 = { (ch: Character) in ch == "(" ? 1 : 2 }
+let prec2 = { (ch: Character) in ch == "(" ? 1 : ch == "*" ? 2 : 3 }
 
 // MARK: - Run the code, report the result
-func star(_ input: [String]) -> Int {
-  input.lazy.map(runParser).map(eval).reduce(0, +)
+func star(_ input: [String], precedence prec: (Character) -> Int) -> Int {
+  input.map { eval($0, precedence: prec) }.reduce(0, +)
 }
 
-let (t1, value1) = time(star(input))
+let (t1, value1) = time(star(input, precedence: prec1))
 print("star 1: \(value1) | \(t1 / 1000)µs")
 
-//let (t2, value2) = time(star(4, 6))
-//print("star 2: \(value2) | \(t2 / 1000)µs")
-//
-//let (t3, value3) = time(star(6, 4))
-//print("star 3: \(value3) | \(t3 / 1000)µs")
+func star(_ input: [String]) -> Int {
+  input.map { eval($0, precedence: prec1) }.reduce(0, +)
+}
+
+let (t2, value2) = time(star(input, precedence: prec2))
+print("star 2: \(value2) | \(t2 / 1000)µs")
