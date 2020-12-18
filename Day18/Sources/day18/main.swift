@@ -57,9 +57,5 @@ func star(_ input: [String], precedence prec: (Character) -> Int) -> Int {
 let (t1, value1) = time(star(input, precedence: prec1))
 print("star 1: \(value1) | \(t1 / 1000)µs")
 
-func star(_ input: [String]) -> Int {
-  input.map { eval($0, precedence: prec1) }.reduce(0, +)
-}
-
 let (t2, value2) = time(star(input, precedence: prec2))
 print("star 2: \(value2) | \(t2 / 1000)µs")
